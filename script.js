@@ -253,6 +253,7 @@ const mainTimer = new TimerEngine({
   onFinish: () => {
     playEndBuzzer();
     vibrateEndBuzzer();
+    notifyFinish('メインタイマー終了', '設定した時間が終了しました');
     mainStartBtn.disabled = false;
     mainPauseBtn.disabled = true;
     releaseWakeLockIfIdle();
@@ -306,6 +307,7 @@ mainApplyCustom.addEventListener('click', () => {
 mainStartBtn.addEventListener('click', () => {
   getAudioCtx();
   requestWakeLock();
+  requestNotificationPermission();
   mainTimer.start();
   mainStartBtn.disabled = true;
   mainPauseBtn.disabled = false;
@@ -350,6 +352,7 @@ const subTimer = new TimerEngine({
   onFinish: () => {
     playEndBuzzer();
     vibrateEndBuzzer();
+    notifyFinish('サブタイマー終了', '設定した時間が終了しました');
     subStartBtn.disabled = false;
     subPauseBtn.disabled = true;
     releaseWakeLockIfIdle();
@@ -378,6 +381,7 @@ subPresets.addEventListener('click', (e) => {
 subStartBtn.addEventListener('click', () => {
   getAudioCtx();
   requestWakeLock();
+  requestNotificationPermission();
   subTimer.start();
   subStartBtn.disabled = true;
   subPauseBtn.disabled = false;
@@ -427,6 +431,50 @@ document.addEventListener('visibilitychange', () => {
     requestWakeLock();
   }
 });
+
+/* ============ Finish notification (best-effort background fallback) ============ */
+/* If the tab gets backgrounded, mobile browsers throttle or suspend its JS,
+   so the in-page beeps/vibration can be missed entirely. A system
+   notification at least has a chance of showing up when that happens —
+   though if the browser has fully suspended the page, even this won't fire
+   until it wakes back up, so it's a best effort, not a guarantee. */
+
+let swRegistration = null;
+
+async function initServiceWorker() {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    swRegistration = await navigator.serviceWorker.register('sw.js');
+  } catch (e) { /* not available */ }
+}
+initServiceWorker();
+
+function requestNotificationPermission() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'default') {
+    Notification.requestPermission().catch(() => {});
+  }
+}
+
+async function notifyFinish(title, body) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const reg = swRegistration || await navigator.serviceWorker.ready.catch(() => null);
+    if (reg && reg.showNotification) {
+      // Android requires showing notifications via a Service Worker registration;
+      // the plain Notification constructor throws there.
+      reg.showNotification(title, {
+        body,
+        icon: 'assets/icons/icon-192.png',
+        vibrate: [250, 120, 250, 120, 500],
+        tag: 'efk-timer-finish',
+        renotify: true,
+      });
+    } else if (typeof Notification === 'function') {
+      new Notification(title, { body, icon: 'assets/icons/icon-192.png' });
+    }
+  } catch (e) { /* ignore */ }
+}
 
 /* ============ Score board ============ */
 
