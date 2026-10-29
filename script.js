@@ -3,6 +3,16 @@
 /* ============ Audio ============ */
 
 let audioCtx = null;
+const BUZZER_VOLUME_KEY = 'efk-futsal-timer.buzzer-volume';
+// "Large" preserves the previous buzzer gain. No device/system volume changes.
+const BUZZER_LEVELS = Object.freeze({ low: 0.1, medium: 0.24, high: 0.4 });
+const BUZZER_FREQUENCY = 294; // was 196 Hz; retain the original two-oscillator timbre
+let buzzerVolume = 'high';
+try {
+  const savedVolume = localStorage.getItem(BUZZER_VOLUME_KEY);
+  if (Object.prototype.hasOwnProperty.call(BUZZER_LEVELS, savedVolume)) buzzerVolume = savedVolume;
+} catch (e) { /* Storage may be disabled; keep a working in-memory default. */ }
+
 function getAudioCtx() {
   if (!audioCtx) {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -37,7 +47,7 @@ function playEndBuzzer() {
     const ctx = getAudioCtx();
     const now = ctx.currentTime;
     const duration = 1.7;
-    const sustainLevel = 0.4;
+    const sustainLevel = BUZZER_LEVELS[buzzerVolume];
 
     const gain = ctx.createGain();
     gain.connect(ctx.destination);
@@ -47,7 +57,7 @@ function playEndBuzzer() {
     gain.gain.linearRampToValueAtTime(0, now + duration);
 
     // two slightly detuned square oscillators for a thicker, more "alarm-like" buzz
-    [196, 196 * 1.006].forEach((freq) => {
+    [BUZZER_FREQUENCY, BUZZER_FREQUENCY * 1.006].forEach((freq) => {
       const osc = ctx.createOscillator();
       osc.type = 'square';
       osc.frequency.value = freq;
@@ -230,7 +240,17 @@ const mainWheelMin = document.getElementById('mainWheelMin');
 const mainWheelSec = document.getElementById('mainWheelSec');
 const mainApplyCustom = document.getElementById('mainApplyCustom');
 const mainCustomDetails = document.getElementById('mainCustomDetails');
+const mainLongPreset = document.getElementById('mainLongPreset');
+const buzzerVolumeSelect = document.getElementById('buzzerVolume');
 const modeButtons = document.querySelectorAll('.mode-btn');
+
+buzzerVolumeSelect.value = buzzerVolume;
+buzzerVolumeSelect.addEventListener('change', () => {
+  const selected = buzzerVolumeSelect.value;
+  if (!Object.prototype.hasOwnProperty.call(BUZZER_LEVELS, selected)) return;
+  buzzerVolume = selected;
+  try { localStorage.setItem(BUZZER_VOLUME_KEY, selected); } catch (e) { /* Keep working without storage. */ }
+});
 
 let mainSoundMode = 'alert'; // 'alert' = 30s/10s/5-1 beeps, 'silent' = final buzzer only
 let mainTotalSeconds = 120;
@@ -262,9 +282,12 @@ const mainTimer = new TimerEngine({
 mainTimer.onTick(mainTimer.currentValue(), mainTimer);
 
 function setMainPresetActive(seconds) {
-  Array.from(mainPresets.children).forEach(btn => {
+  mainPresets.querySelectorAll('.preset-btn').forEach(btn => {
     btn.classList.toggle('active', Number(btn.dataset.seconds) === seconds);
   });
+  const isLongPreset = [720, 900, 1200, 1500].includes(seconds);
+  mainLongPreset.value = isLongPreset ? String(seconds) : '';
+  mainLongPreset.classList.toggle('active', isLongPreset);
 }
 
 function setMainTotal(seconds) {
@@ -278,6 +301,16 @@ mainPresets.addEventListener('click', (e) => {
   const btn = e.target.closest('.preset-btn');
   if (!btn) return;
   const seconds = Number(btn.dataset.seconds);
+  setMainPresetActive(seconds);
+  setMainTotal(seconds);
+});
+
+mainLongPreset.addEventListener('change', () => {
+  const seconds = Number(mainLongPreset.value);
+  if (![720, 900, 1200, 1500].includes(seconds)) {
+    setMainPresetActive(mainTotalSeconds);
+    return;
+  }
   setMainPresetActive(seconds);
   setMainTotal(seconds);
 });

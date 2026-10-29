@@ -441,3 +441,189 @@ body {
     width: 24px;
   }
 }
+
+/* Layout-only revision. Timer, score and notification behaviour is unchanged. */
+body {
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+    env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.app-header { padding: 4px 10px; gap: 8px; }
+.app-header .logo { width: 24px; height: 24px; }
+.app-header h1 { font-size: .85rem; }
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px;
+  max-width: 1400px;
+  overflow: auto;
+}
+.panel { flex-shrink: 0; padding: 6px 10px; overflow: visible; }
+.panel-title { font-size: .65rem; line-height: 1.2; margin: 0; }
+button, summary { touch-action: manipulation; }
+button:focus-visible, summary:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+
+/* Full-width score strip, first in both the visual and keyboard order. */
+.score-board { position: relative; flex: 0 0 auto; }
+.score-board > .panel-title { text-align: left; min-height: 26px; display: flex; align-items: center; }
+.teams { gap: 6px; }
+.team {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  grid-template-rows: 16px 44px;
+  align-items: center;
+  max-width: 420px;
+}
+.team-name {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: .7rem;
+  line-height: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.score { grid-column: 2; grid-row: 2; font-size: clamp(1.75rem, 5dvh, 3rem); }
+.score-btns { display: contents; }
+.score-btn { width: 44px; height: 44px; font-size: 1.1rem; }
+.score-btn.minus { grid-column: 1; grid-row: 2; }
+.score-btn.plus { grid-column: 3; grid-row: 2; }
+.team-divider { font-size: 1.3rem; align-self: end; line-height: 44px; }
+.reset-score-btn { position: absolute; right: 10px; top: 4px; min-height: 28px; margin: 0; font-size: .65rem; }
+
+/* The largest area and digits remain the main timer. */
+.main-timer {
+  flex: 1 0 auto;
+  justify-content: center;
+  gap: 2px;
+  padding: 6px 8px;
+  overflow: visible;
+}
+.main-timer > * { flex-shrink: 0; }
+.mode-switch { margin: 0 auto; padding: 2px; }
+.mode-btn { min-height: 32px; padding: 4px 12px; font-size: .75rem; }
+.main-display {
+  font-size: clamp(4.5rem, min(25vw, 16dvh), 12rem);
+  line-height: 1;
+  margin: 0;
+}
+.presets { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; margin: 0; }
+.preset-btn, .preset-btn.small { min-height: 34px; padding: 4px 2px; font-size: .72rem; border-radius: 8px; white-space: nowrap; }
+.custom-time { margin: 0 auto; }
+.custom-time summary { min-height: 28px; padding: 5px 2px; font-size: .68rem; }
+.controls, .small-controls { gap: 6px; margin: 0; }
+.ctrl-btn, .ctrl-btn.small { flex: 1 1 0; min-width: 0; min-height: 44px; padding: 6px 4px; font-size: .85rem; border-radius: 9px; white-space: nowrap; }
+.apply-btn { min-height: 44px; }
+
+/* A wide, readable secondary timer, always below the main. */
+.sub-timer { display: flex; flex-direction: column; gap: 3px; flex: 0 0 auto; }
+.sub-display { font-size: clamp(2.5rem, min(14vw, 8dvh), 5rem); line-height: 1; margin: 0; }
+.sub-presets { gap: 5px; margin: 0; }
+
+/* Short portrait viewports keep the three essential panels on screen. */
+@media (orientation: portrait) and (max-height: 650px) {
+  .app-header { padding: 3px 8px; }
+  .app-header .logo { width: 22px; height: 22px; }
+  .layout { padding: 4px; gap: 4px; }
+  .panel { padding: 4px 6px; border-radius: 11px; }
+  .main-display { font-size: clamp(4.25rem, min(25vw, 15dvh), 6rem); }
+  .sub-display { font-size: 2.5rem; }
+  .preset-btn, .preset-btn.small { min-height: 32px; }
+}
+
+/* Landscape is still score / main / sub, not a narrow side bar. The
+   settings sit beside the digits to preserve touch targets on short phones. */
+@media (orientation: landscape) {
+  .app-header { padding: 3px 10px; }
+  .app-header .logo { width: 20px; height: 20px; }
+  .app-header h1 { font-size: .75rem; }
+  .layout { flex-direction: column; }
+  .score-board {
+    display: grid;
+    grid-template-columns: 70px minmax(0, 1fr) 82px;
+    gap: 8px;
+    align-items: center;
+  }
+  .score-board > .panel-title { min-height: 0; }
+  .team { grid-template-rows: 14px 32px; }
+  .team-name { grid-column: 2; font-size: .65rem; line-height: 14px; }
+  .score { font-size: 2rem; }
+  .score-btn.minus, .score-btn.plus { grid-row: 1 / 3; }
+  .team-divider { align-self: center; line-height: 1; }
+  .reset-score-btn { position: static; min-height: 44px; padding: 4px; }
+  .main-timer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(270px, .9fr);
+    grid-template-rows: auto auto auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 3px;
+    flex: 1 0 auto;
+  }
+  .main-timer > .panel-title { grid-column: 1; grid-row: 1; align-self: start; }
+  .main-display { grid-column: 1; grid-row: 2 / 5; font-size: clamp(4rem, min(16vw, 23dvh), 12rem); }
+  .mode-switch { grid-column: 2; grid-row: 1; }
+  .main-timer > .presets { grid-column: 2; grid-row: 2; }
+  .custom-time { grid-column: 2; grid-row: 3; }
+  .main-timer > .controls { grid-column: 2; grid-row: 4; }
+  .sub-timer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(270px, .9fr);
+    grid-template-rows: auto auto;
+    align-items: center;
+    column-gap: 12px;
+  }
+  .sub-timer > .panel-title { grid-column: 1; grid-row: 1; align-self: start; }
+  .sub-display { grid-column: 1; grid-row: 1 / 3; padding-top: 12px; font-size: clamp(2.5rem, min(10vw, 14dvh), 5.75rem); }
+  .sub-presets { grid-column: 2; grid-row: 1; }
+  .small-controls { grid-column: 2; grid-row: 2; }
+}
+
+@media (orientation: landscape) and (max-height: 450px) {
+  .app-header { padding: 2px 8px; }
+  .app-header .logo { width: 18px; height: 18px; }
+  .layout { padding: 3px 5px; gap: 3px; }
+  .panel { padding: 3px 6px; border-radius: 10px; }
+  .main-timer, .sub-timer { grid-template-columns: minmax(0, 1fr) minmax(270px, 1fr); column-gap: 8px; row-gap: 1px; }
+  .mode-switch { padding: 1px; }
+  .mode-btn { min-height: 30px; }
+  .preset-btn, .preset-btn.small { min-height: 30px; font-size: .68rem; }
+  .custom-time summary { min-height: 24px; padding: 3px 0; font-size: .63rem; }
+  .main-display { font-size: clamp(4.5rem, min(16vw, 25dvh), 7rem); }
+  .sub-display { font-size: clamp(2.5rem, 14dvh, 3.75rem); }
+}
+
+/* Expanded custom time stays reachable on small screens; normal timer view
+   keeps every essential control visible without scrolling. */
+.main-timer:has(.custom-time[open]) { flex-shrink: 0; }
+/* Extra main-timer presets and shared finish-buzzer volume. */
+#mainPresets { grid-template-columns: repeat(5, minmax(0, 1fr)) 60px; gap: 4px; }
+#mainPresets .preset-btn[data-seconds="150"] { white-space: normal; line-height: 1.1; }
+.long-preset, #buzzerVolume {
+  min-width: 0;
+  min-height: 32px;
+  max-width: 100%;
+  margin: 0;
+  border: 1px solid var(--blue);
+  border-radius: 8px;
+  color: var(--text);
+  background: var(--blue-dark);
+  font-family: inherit;
+  font-size: .68rem;
+  padding: 3px 2px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.long-preset.active { background: var(--blue); box-shadow: 0 0 0 3px rgba(47,143,224,.4); }
+.long-preset option, #buzzerVolume option { color: var(--text); background: var(--panel-bg); }
+.main-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 32px; }
+.volume-control { display: inline-flex; align-items: center; gap: 5px; font-size: .62rem; letter-spacing: 0; white-space: nowrap; }
+#buzzerVolume { width: 44px; }
+select:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
+@media (orientation: landscape) and (max-height: 450px) {
+  .main-heading { min-height: 30px; gap: 4px; }
+  .main-heading > span { font-size: .6rem; letter-spacing: 0; }
+  .long-preset, #buzzerVolume { min-height: 30px; }
+}
